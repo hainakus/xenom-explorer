@@ -2,6 +2,144 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { xenomSDK } from './xenom-sdk';
 import './styles.css';
 
+function DifficultyChart({ samples = [] }) {
+  const points = samples.filter(sample => Number.isFinite(sample.v) && sample.v > 0);
+  const width = 760;
+  const height = 220;
+  const padding = { top: 18, right: 18, bottom: 26, left: 18 };
+
+  if (points.length < 2) {
+    return (
+      <div className="difficulty-chart empty-state">
+        <div className="difficulty-empty">Collecting difficulty samples…</div>
+      </div>
+    );
+  }
+
+  const values = points.map(point => point.v);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || Math.max(1, max * 0.08);
+  const innerWidth = width - padding.left - padding.right;
+  const innerHeight = height - padding.top - padding.bottom;
+
+  const scaleX = index => padding.left + (innerWidth * index) / (points.length - 1);
+  const scaleY = value => padding.top + innerHeight - ((value - min) / range) * innerHeight;
+
+  const coords = points.map((point, index) => ({ x: scaleX(index), y: scaleY(point.v) }));
+  const smoothPath = (segments, close = false) => {
+    if (segments.length < 2) return '';
+    const start = segments[0];
+    let path = `M ${start.x.toFixed(2)} ${start.y.toFixed(2)}`;
+    for (let index = 0; index < segments.length - 1; index += 1) {
+      const point0 = segments[index - 1] || segments[index];
+      const point1 = segments[index];
+      const point2 = segments[index + 1];
+      const point3 = segments[index + 2] || point2;
+      const control1X = point1.x + (point2.x - point0.x) / 6;
+      const control1Y = point1.y + (point2.y - point0.y) / 6;
+      const control2X = point2.x - (point3.x - point1.x) / 6;
+      const control2Y = point2.y - (point3.y - point1.y) / 6;
+      path += ` C ${control1X.toFixed(2)} ${control1Y.toFixed(2)}, ${control2X.toFixed(2)} ${control2Y.toFixed(2)}, ${point2.x.toFixed(2)} ${point2.y.toFixed(2)}`;
+    }
+    if (close) path += ' Z';
+    return path;
+  };
+  const linePath = smoothPath(coords);
+  const areaBase = height - padding.bottom;
+  const areaPath = `${smoothPath(coords)} L ${coords[coords.length - 1].x.toFixed(2)} ${areaBase} L ${coords[0].x.toFixed(2)} ${areaBase} Z`;
+  const first = points[0].v;
+  const last = points[points.length - 1].v;
+  const delta = first > 0 ? ((last - first) / first) * 100 : 0;
+  const guideCount = 6;
+  const minIndex = values.indexOf(min);
+  const maxIndex = values.indexOf(max);
+  const startLabel = new Date(points[0].t).toLocaleString('en-GB', {
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const endLabel = new Date(points[points.length - 1].t).toLocaleString('en-GB', {
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+  return (
+    <div className="difficulty-chart">
+      <div className="difficulty-chart-top">
+        <div>
+          <div className="difficulty-label">Difficulty evolution</div>
+          <div className="difficulty-meta">
+            <span className="difficulty-value">{last.toFixed(6)}</span>
+            <span className={'difficulty-chip ' + (delta >= 0 ? 'up' : 'down')}>
+              {delta >= 0 ? '+' : ''}
+              {delta.toFixed(2)}%
+            </span>
+          </div>
+        </div>
+        <div className="difficulty-note">
+          {points.length} samples · live trend
+        </div>
+      </div>
+
+      <div className="difficulty-plot">
+        <div className="difficulty-axis min">Min {min.toFixed(6)}</div>
+        <div className="difficulty-axis max">Max {max.toFixed(6)}</div>
+        <div className="difficulty-timeline start">{startLabel}</div>
+        <div className="difficulty-timeline end">{endLabel}</div>
+        <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Blockchain difficulty evolution chart">
+          <defs>
+            <linearGradient id="difficultyLine" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="var(--cyan)" />
+              <stop offset="52%" stopColor="var(--violet)" />
+              <stop offset="100%" stopColor="var(--magenta)" />
+            </linearGradient>
+            <linearGradient id="difficultyFill" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="rgba(78, 243, 255, 0.35)" />
+              <stop offset="60%" stopColor="rgba(185, 92, 255, 0.12)" />
+              <stop offset="100%" stopColor="rgba(185, 92, 255, 0)" />
+            </linearGradient>
+            <filter id="difficultyGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="1.8" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          {Array.from({ length: guideCount }).map((_, index) => {
+            const y = padding.top + (innerHeight * index) / (guideCount - 1);
+            return <line key={index} x1={padding.left} y1={y} x2={width - padding.right} y2={y} className="difficulty-grid-line" />;
+          })}
+
+          <path d={areaPath} className="difficulty-area" fill="url(#difficultyFill)" />
+          <path d={linePath} className="difficulty-line" stroke="url(#difficultyLine)" filter="url(#difficultyGlow)" />
+          {coords.map((point, index) => (
+            <circle
+              key={`${points[index].t}-${index}`}
+              cx={point.x}
+              cy={point.y}
+              r={index === points.length - 1 ? 3.2 : 1.8}
+              className={[
+                'difficulty-dot',
+                index === points.length - 1 ? 'current' : '',
+                index === minIndex ? 'low' : '',
+                index === maxIndex ? 'high' : '',
+              ].filter(Boolean).join(' ')}
+            />
+          ))}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 // Copy Button Component
 function CopyBtn({ text }) {
   const [ok, setOk] = useState(false);
@@ -11,7 +149,7 @@ function CopyBtn({ text }) {
       const el = document.createElement('textarea');
       el.value = text; el.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
       document.body.appendChild(el); el.focus(); el.select();
-      try { document.execCommand('copy'); } catch (e) {}
+      document.execCommand('copy');
       document.body.removeChild(el); done();
     }
     if (navigator.clipboard) {
@@ -47,7 +185,7 @@ function SearchBar({ onNav }) {
       try {
         await xenomSDK.getBlock(v, false);
         setQ(''); onNav({ page: 'block', id: v });
-      } catch (_) {
+      } catch {
         setQ(''); onNav({ page: 'tx', id: v });
       } finally { setBusy(false); }
       return;
@@ -75,13 +213,30 @@ function Dashboard({ onNav }) {
   const [node, setNode] = useState(null);
   const [supply, setSupply] = useState(null);
   const [blocks, setBlocks] = useState([]);
+  const [difficultyHistory, setDifficultyHistory] = useState([]);
   const [live, setLive] = useState(false);
   const flashRef = useRef(null);
+
+  const pushDifficultySample = useCallback((difficulty) => {
+    if (!Number.isFinite(difficulty) || difficulty <= 0) return;
+    const now = Date.now();
+    setDifficultyHistory(prev => {
+      const last = prev[prev.length - 1];
+      if (last && Math.abs(last.v - difficulty) < 1e-12 && now - last.t < 12000) {
+        return prev;
+      }
+      const next = [...prev, { t: now, v: difficulty }];
+      return next.slice(-28);
+    });
+  }, []);
 
   // Poll stats every 6s — each loads independently; also reload on connect
   useEffect(() => {
     const load = () => {
-      xenomSDK.getBlockDagInfo().then(setDag).catch(() => {});
+      xenomSDK.getBlockDagInfo().then(data => {
+        setDag(data);
+        pushDifficultySample(data?.difficulty);
+      }).catch(() => {});
       xenomSDK.getXenomdInfo().then(setNode).catch(() => {});
       xenomSDK.getCoinSupply().then(setSupply).catch(() => {});
     };
@@ -92,7 +247,7 @@ function Dashboard({ onNav }) {
       clearInterval(t);
       xenomSDK.off('connect', load);
     };
-  }, []);
+  }, [pushDifficultySample]);
 
   // WASM RPC live blocks
   useEffect(() => {
@@ -115,9 +270,6 @@ function Dashboard({ onNav }) {
     xenomSDK.on('disconnect', onDisconnect);
     xenomSDK.on('block',      onBlock);
 
-    // If already connected when this mounts, set live immediately
-    if (xenomSDK.ready) setLive(true);
-
     return () => {
       xenomSDK.off('connect',    onConnect);
       xenomSDK.off('disconnect', onDisconnect);
@@ -132,6 +284,10 @@ function Dashboard({ onNav }) {
 
   return (
     <div>
+      <div className="hero-grid">
+        <DifficultyChart samples={difficultyHistory} />
+      </div>
+
       {/* STATS */}
       <div className="stats">
         <div className="stat">
@@ -561,7 +717,7 @@ const navToPath = (t) => {
 // Main App Component
 function App() {
   const [nav, setNav] = useState(() => parsePath());
-  const [live, setLive] = useState(false);
+  const [live, setLive] = useState(xenomSDK.ready);
   const [wasmInitialized, setWasmInitialized] = useState(false);
 
   const onNav = useCallback(t => {
@@ -583,7 +739,10 @@ function App() {
     xenomSDK.on('disconnect', onDisconnect);
 
     xenomSDK.initWasm()
-      .then(() => xenomSDK.connectWebSocket())
+      .then(() => {
+        setWasmInitialized(true);
+        return xenomSDK.connectWebSocket();
+      })
       .catch(err => console.error('[XenomSDK] WASM init failed:', err));
 
     return () => {
@@ -596,10 +755,41 @@ function App() {
   return (
     <>
       <div className="bg-grid" />
+      <div className="bg-plates" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
+      <div className="bg-traces" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
       <div className="wrap">
         <nav>
           <div className="logo" onClick={() => onNav({ page: 'dashboard' })}>
-            <span className="logo-icon">◈</span> XENOM
+            <span className="logo-icon" aria-hidden="true">
+              <svg className="logo-dna" viewBox="0 0 24 24" role="presentation">
+                <path d="M8 3.5C14 6.5 14 17.5 8 20.5" />
+                <path d="M16 3.5C10 6.5 10 17.5 16 20.5" />
+                <path d="M9.2 6.2H14.8" />
+                <path d="M8.5 9.2H15.5" />
+                <path d="M8.2 12H15.8" />
+                <path d="M8.5 14.8H15.5" />
+                <path d="M9.2 17.8H14.8" />
+              </svg>
+            </span>
+            <span className="logo-wordmark">Xenom</span>
           </div>
           <SearchBar onNav={onNav} />
           <ul className="nav-links">
