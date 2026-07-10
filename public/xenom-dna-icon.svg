@@ -1,0 +1,35 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dnaGlow" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4ef3ff"/>
+      <stop offset="0.52" stop-color="#b95cff"/>
+      <stop offset="1" stop-color="#ff4ed7"/>
+    </linearGradient>
+    <radialGradient id="dnaCore" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(32 32) rotate(90) scale(24)">
+      <stop offset="0" stop-color="#22102f"/>
+      <stop offset="1" stop-color="#090914"/>
+    </radialGradient>
+    <filter id="dnaBlur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.2" />
+    </filter>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#dnaCore)" stroke="rgba(185,92,255,0.34)" stroke-width="1.5"/>
+  <circle cx="32" cy="32" r="26" stroke="rgba(78,243,255,0.14)" stroke-width="0.8" stroke-dasharray="2 4"/>
+  <path d="M22 14C34 18 34 46 22 50" stroke="url(#dnaGlow)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M42 14C30 18 30 46 42 50" stroke="url(#dnaGlow)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M25 19H39" stroke="rgba(233,230,255,0.9)" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M23.5 25.5H40.5" stroke="rgba(233,230,255,0.82)" stroke-width="2.1" stroke-linecap="round"/>
+  <path d="M22.8 32H41.2" stroke="rgba(233,230,255,0.74)" stroke-width="2.0" stroke-linecap="round"/>
+  <path d="M23.5 38.5H40.5" stroke="rgba(233,230,255,0.82)" stroke-width="2.1" stroke-linecap="round"/>
+  <path d="M25 45H39" stroke="rgba(233,230,255,0.9)" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="23.5" cy="25.5" r="1.9" fill="#4ef3ff"/>
+  <circle cx="40.5" cy="25.5" r="1.9" fill="#ff4ed7"/>
+  <circle cx="22.8" cy="32" r="2.1" fill="#b95cff"/>
+  <circle cx="41.2" cy="32" r="2.1" fill="#4ef3ff"/>
+  <circle cx="23.5" cy="38.5" r="1.9" fill="#ff4ed7"/>
+  <circle cx="40.5" cy="38.5" r="1.9" fill="#4ef3ff"/>
+  <g filter="url(#dnaBlur)" opacity="0.9">
+    <path d="M22 14C34 18 34 46 22 50" stroke="#4ef3ff" stroke-width="2" stroke-linecap="round"/>
+    <path d="M42 14C30 18 30 46 42 50" stroke="#ff4ed7" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>
