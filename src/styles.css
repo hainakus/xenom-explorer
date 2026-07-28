@@ -3,7 +3,6 @@
   margin: 0;
   padding: 0;
 }
-
 :root {
   color-scheme: light;
   --bg: #f2f2f2;
@@ -11,6 +10,7 @@
   --text: #22272e;
   --muted: #7a8289;
   --muted-2: rgba(122, 130, 137, 0.8);
+  /* Verde base mantido, é um bom equilíbrio */
   --cyan: #2eea8a;
   --bio-green: #2eea8a;
   --bio-green-dim: #1dbf6f;
@@ -33,6 +33,35 @@
   --inner-shadow: inset 4px 4px 10px rgba(0, 0, 0, 0.05), inset -4px -4px 10px rgba(255, 255, 255, 0.55);
 }
 
+/* MODO ESCURO AJUSTADO PARA A IMAGEM XENOMORPH */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  /* Fundo Preto Absoluto para igualar a imagem */
+  --bg: #000000;
+  --bg-2: #050505; /* Um cinza quase preto para profundidade */
+  --text: #ffffff;
+  --muted: #c7ccd1;
+  --muted-2: rgba(199, 204, 209, 0.55);
+
+  /* Verde Neon Ajustado - Ligeiramente mais vibrante para o brilho */
+  --cyan: #2eea8a;
+  --bio-green: #2eea8a;
+  --bio-green-dim: #1dbf6f;
+  --bio-green-ghost: rgba(46, 234, 138, 0.15); /* Aumentei um pouco a opacidade do ghost */
+
+  /* Borda e Stroke com o verde para combinar com o logo */
+  --stroke: rgba(46, 234, 138, 0.2);
+  --stroke-strong: rgba(46, 234, 138, 0.4);
+
+  /* Sombras e Brilhos focados no Verde Neon */
+  --shadow-soft: 0 0 24px rgba(46, 234, 138, 0.1), 0 0 8px rgba(46, 234, 138, 0.05);
+  --shadow: 0 0 32px rgba(46, 234, 138, 0.15), 0 0 12px rgba(46, 234, 138, 0.08);
+  --glow: rgba(46, 234, 138, 0.4);
+  --glow-strong: rgba(46, 234, 138, 0.6);
+
+  /* Inner Shadow focado no verde */
+  --inner-shadow: inset 0 0 0 1px rgba(46, 234, 138, 0.2), inset 0 0 12px rgba(46, 234, 138, 0.05);
+}
 html,
 body,
 #root {
@@ -52,6 +81,11 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html[data-theme="dark"] body {
+  background:
+    var(--bg);
 }
 
 a {

@@ -3,6 +3,18 @@ import { xenomSDK } from './xenom-sdk';
 import LogoIcon from './LogoIcon.jsx';
 import './styles.css';
 
+function useSystemTheme() {
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => {
+      document.documentElement.setAttribute('data-theme', mq.matches ? 'dark' : 'light');
+    };
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+}
+
 function DifficultyChart({ samples = [] }) {
   const points = samples.filter(sample => Number.isFinite(sample.v) && sample.v > 0);
   const width = 760;
@@ -732,6 +744,7 @@ const navToPath = (t) => {
 
 // Main App Component
 function App() {
+  useSystemTheme();
   const [nav, setNav] = useState(() => parsePath());
   const [live, setLive] = useState(xenomSDK.ready);
   const [wasmInitialized, setWasmInitialized] = useState(false);
