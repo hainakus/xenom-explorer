@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { xenomSDK } from './xenom-sdk';
+import LogoIcon from './LogoIcon.jsx';
 import './styles.css';
 
 function DifficultyChart({ samples = [] }) {
@@ -100,9 +101,9 @@ function DifficultyChart({ samples = [] }) {
               <stop offset="100%" stopColor="var(--magenta)" />
             </linearGradient>
             <linearGradient id="difficultyFill" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="rgba(78, 243, 255, 0.35)" />
-              <stop offset="60%" stopColor="rgba(185, 92, 255, 0.12)" />
-              <stop offset="100%" stopColor="rgba(185, 92, 255, 0)" />
+              <stop offset="0%" stopColor="var(--bio-green)" stopOpacity="0.35" />
+              <stop offset="60%" stopColor="var(--bio-green)" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="var(--bio-green)" stopOpacity="0" />
             </linearGradient>
             <filter id="difficultyGlow" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="1.8" result="blur" />
@@ -282,59 +283,55 @@ function Dashboard({ onNav }) {
   const maxS = supply ? (Number(supply.maxSupply) / 1e8).toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—';
   const pct = supply ? (Number(supply.circulatingSupply) / Number(supply.maxSupply) * 100).toFixed(1) : null;
 
+  const lastBlock = blocks.length ? blocks[0] : null;
+  const lastHdr = lastBlock?.header || {};
+
   return (
     <div>
+      <div className="stat-hero">
+        <div className="stat">
+          <div className="stat-val">{dag ? Number(dag.blockCount).toLocaleString() : '—'}</div>
+          <div className="stat-lbl">Block Count</div>
+        </div>
+        <div className="stat">
+          <div className="stat-val" style={{ fontSize: '1.7rem' }}>{hashrate}</div>
+          <div className="stat-lbl">Network Hashrate</div>
+          <div className="stat-sub">Difficulty: {dag ? dag.difficulty.toFixed(6) : '—'}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-val" style={{ fontSize: '1.5rem' }}>{circ}</div>
+          <div className="stat-lbl">Circulating Supply</div>
+          <div className="stat-sub">Max: {maxS}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-val" style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+            <span className={'dot' + (node?.isSynced ? '' : ' off')} />
+            {node?.isSynced ? 'SYNCED' : 'SYNCING'}
+          </div>
+          <div className="stat-lbl">Node Status</div>
+          <div className="stat-sub">{dag?.networkName || '—'}</div>
+        </div>
+      </div>
+
+      <div className="stats-row">
+        <div className="stats-row-item">
+          <div className="stats-row-lbl">Network Difficulty</div>
+          <div className="stats-row-val">{dag ? dag.difficulty.toFixed(6) : '—'}</div>
+        </div>
+        <div className="stats-row-item">
+          <div className="stats-row-lbl">Network Hashrate</div>
+          <div className="stats-row-val">{hashrate} KH/s</div>
+        </div>
+        <div className="stats-row-item">
+          <div className="stats-row-lbl">Network</div>
+          <div className="stats-row-val">{dag?.networkName || '—'}</div>
+        </div>
+      </div>
+
       <div className="hero-grid">
         <DifficultyChart samples={difficultyHistory} />
       </div>
 
-      {/* STATS */}
-      <div className="stats">
-        <div className="stat">
-          <div className="stat-lbl">Block Count</div>
-          <div className="stat-val">{dag ? Number(dag.blockCount).toLocaleString() : '—'}</div>
-          <div className="stat-sub">DAA Score: {dag ? Number(dag.virtualDaaScore).toLocaleString() : '—'}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-lbl">Hashrate</div>
-          <div className="stat-val" style={{ fontSize: '.95rem' }}>
-            {hashrate} <span style={{ fontSize: '.6rem', color: 'var(--txd)' }}>KH/s</span>
-          </div>
-          <div className="stat-sub">Difficulty: {dag ? dag.difficulty.toFixed(6) : '—'}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-lbl">Circulating Supply</div>
-          <div className="stat-val" style={{ fontSize: '.9rem' }}>{circ}</div>
-          <div className="stat-sub">Max: {maxS}</div>
-          {pct && <div className="progress"><div className="progress-fill" style={{ width: pct + '%' }} /></div>}
-          {pct && <div className="stat-sub">{pct}% mined</div>}
-        </div>
-        <div className="stat">
-          <div className="stat-lbl">Node Status</div>
-          <div className="stat-val" style={{ fontSize: '.85rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-            <span className={'dot' + (node?.isSynced ? '' : ' off')} />
-            {node?.isSynced ? 'SYNCED' : 'SYNCING'}
-          </div>
-          <div className="stat-sub">v{node?.serverVersion || '—'} · mempool: {node?.mempoolSize || 0}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-lbl">Network</div>
-          <div className="stat-val" style={{ fontSize: '.85rem' }}>{dag?.networkName || '—'}</div>
-          <div className="stat-sub">
-            {dag ? new Date(parseInt(dag.pastMedianTime)).toLocaleTimeString() : '—'}
-          </div>
-        </div>
-        <div className="stat">
-          <div className="stat-lbl">Live Feed</div>
-          <div className="stat-val" style={{ fontSize: '.85rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-            <span className={'dot' + (live ? '' : ' off')} />
-            {live ? 'CONNECTED' : 'OFFLINE'}
-          </div>
-          <div className="stat-sub">{blocks.length} blocks received</div>
-        </div>
-      </div>
-
-      {/* BLOCKS TABLE */}
       <div className="panel">
         <div className="panel-hdr">
           <span className="sec-title">Latest Blocks</span>
@@ -378,6 +375,25 @@ function Dashboard({ onNav }) {
               </tbody>
             </table>
         }
+      </div>
+
+      <div className="stats-row">
+        <div className="stats-row-item">
+          <div className="stats-row-lbl">Latest Hash</div>
+          <div className="stats-row-val">
+            {lastBlock
+              ? <button className="lnk" onClick={() => onNav({ page: 'block', id: lastBlock._h })}>{xenomSDK.shortHash(lastBlock._h, 14)}</button>
+              : '—'}
+          </div>
+        </div>
+        <div className="stats-row-item">
+          <div className="stats-row-lbl">Block Time</div>
+          <div className="stats-row-val">{lastHdr.timestamp ? xenomSDK.timeAgo(lastHdr.timestamp) : '—'}</div>
+        </div>
+        <div className="stats-row-item">
+          <div className="stats-row-lbl">Max Supply</div>
+          <div className="stats-row-val">{maxS}</div>
+        </div>
       </div>
     </div>
   );
@@ -527,7 +543,7 @@ function AddressPage({ id, onNav }) {
       <div className="stats" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', marginBottom: '1.5rem' }}>
         <div className="stat">
           <div className="stat-lbl">Balance</div>
-          <div className="amt-g" style={{ fontFamily: 'var(--fd)', fontSize: '1rem', textShadow: '0 0 12px rgba(0,255,136,.25)' }}>
+          <div className="amt-g" style={{ fontFamily: 'var(--fd)', fontSize: '1rem', textShadow: '0 0 12px var(--glow)' }}>
             {xenomSDK.formatAmount(bal?.balance)}
           </div>
         </div>
@@ -753,59 +769,48 @@ function App() {
   }, []);
 
   return (
-    <>
-      <div className="bg-grid" />
-      <div className="bg-plates" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
-      <div className="bg-traces" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
-      <div className="wrap">
-        <nav>
-          <div className="logo" onClick={() => onNav({ page: 'dashboard' })}>
-            <span className="logo-icon" aria-hidden="true">
-              <svg className="logo-dna" viewBox="0 0 24 24" role="presentation">
-                <path d="M8 3.5C14 6.5 14 17.5 8 20.5" />
-                <path d="M16 3.5C10 6.5 10 17.5 16 20.5" />
-                <path d="M9.2 6.2H14.8" />
-                <path d="M8.5 9.2H15.5" />
-                <path d="M8.2 12H15.8" />
-                <path d="M8.5 14.8H15.5" />
-                <path d="M9.2 17.8H14.8" />
-              </svg>
-            </span>
-            <span className="logo-wordmark">Xenom</span>
-          </div>
-          <SearchBar onNav={onNav} />
-          <ul className="nav-links">
-            <li>
-              <button
-                className={nav.page === 'dashboard' ? 'active' : ''}
-                onClick={() => onNav({ page: 'dashboard' })}>
-                Dashboard
-              </button>
-            </li>
-          </ul>
+    <div className="wrap">
+      <nav>
+        <button className="hamburger" aria-label="Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18M3 12h18M3 18h18" />
+          </svg>
+        </button>
+        <div className="logo" onClick={() => onNav({ page: 'dashboard' })}>
+          <span className="logo-icon" aria-hidden="true">
+            <LogoIcon className="logo-dna" />
+          </span>
+          <span className="logo-wordmark">XENOMORPH</span>
+        </div>
+        <SearchBar onNav={onNav} />
+        <ul className="nav-links">
+          <li>
+            <button
+              className={nav.page === 'dashboard' ? 'active' : ''}
+              onClick={() => onNav({ page: 'dashboard' })}>
+              Dashboard
+            </button>
+          </li>
+        </ul>
+        <div className="nav-actions">
+          <button className="nav-icon" aria-label="Account">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </button>
+          <button className="nav-icon" aria-label="Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          </button>
           <span
             className={'dot' + (live ? '' : ' off')}
             title={live ? 'Live stream connected' : 'Disconnected'}
           />
-        </nav>
+        </div>
+      </nav>
 
         <main>
           {nav.page === 'dashboard' && <Dashboard onNav={onNav} />}
@@ -815,14 +820,35 @@ function App() {
         </main>
 
         <footer>
-          <span>XENOM EXPLORER · Evolutionary Proof of Work</span>
+          <div className="footer-brand">
+            <span className="logo-icon" aria-hidden="true" style={{ width: '1.3rem', height: '1.3rem', fontSize: '0.6rem' }}>
+              <LogoIcon className="logo-dna" />
+            </span>
+            <span>XENOMORPH EXPLORER</span>
+          </div>
+          <div className="footer-socials">
+            <a href="https://x.com/XenomCrypto" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </a>
+            <a href="https://discord.gg/HDZvEEDuSP" target="_blank" rel="noopener noreferrer" aria-label="Discord">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.6-5.6A8.38 8.38 0 0 1 3.5 11.5a8.5 8.5 0 0 1 13.1-7.1 8.38 8.38 0 0 1 3.8.9L21 3l-1.6 5.6a8.38 8.38 0 0 1 .9 2.9z" />
+              </svg>
+            </a>
+            <a href="https://github.com/hainakus/Xenomorph" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7a3.37 3.37 0 0 0-.94 2.58V22" />
+              </svg>
+            </a>
+          </div>
           <span style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
             <span className={'dot' + (live ? '' : ' off')} style={{ width: 5, height: 5 }} />
             {live ? 'LIVE' : 'OFFLINE'} · {wasmInitialized ? 'WASM' : 'API'} Powered
           </span>
         </footer>
       </div>
-    </>
   );
 }
 

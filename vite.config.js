@@ -21,9 +21,10 @@ export default defineConfig({
   },
   preview: {
     historyApiFallback: true,
-    allowedHosts: ['explorer.xenom.space'],
+    allowedHosts: ['testnet.xenom.space'],
   },
   build: {
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       external: ['/sdk/kaspa.js'],
     },
